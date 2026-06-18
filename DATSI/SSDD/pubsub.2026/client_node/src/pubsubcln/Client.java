@@ -14,6 +14,20 @@ import pubsub.PubSub;
 public final class Client {
     private Client(){};
     static public PubSub init(String host, String port) throws RemoteException, NotBoundException {
-        return null;
+        try {
+               Registry registry = LocateRegistry.getRegistry(host,
+			    Integer.parseInt(port));
+            // obtiene una referencia remota el servicio
+            PubSub srv = (PubSub) registry.lookup("1");
+
+
+            return srv;
+        } catch (Exception e) {
+         System.err.println("EchoClient exception:"); e.printStackTrace();
+         throw e;
+         
+
+        }
+        
     }
 }

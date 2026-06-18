@@ -5,7 +5,9 @@ import java.rmi.NoSuchObjectException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
 import java.rmi.server.UnicastRemoteObject;
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 import java.util.UUID;
 import pubsub.Subscriber;
 import pubsub.SubscriberCallback;
@@ -17,27 +19,55 @@ class SubscriberImpl extends UnicastRemoteObject implements Subscriber  {
     PubSubImpl ps; // para acceder a funcionalidad del servicio general
     // para notificar al subscriptor de creación y destrucción de temas
     transient SubscriberCallback scbk; 
+    private List <String> SuscripcionesList;
+
 
     public SubscriberImpl(PubSubImpl p, SubscriberCallback s) throws RemoteException {
+        
         scbk=s;
         subUUID = UUID.randomUUID();
-	ps=p;
+	    ps=p;
+        SuscripcionesList = new ArrayList<>();
     }
     public UUID getUUID() throws RemoteException {
         return subUUID;
     }
     public int subscribe(String topic, boolean glob) throws RemoteException {
+         if(!ps.topicList().contains(topic)){
+            return 0;
+        
+    }
+        if (SuscripcionesList.contains(topic)){
         return 0;
+    }
+   
+        SuscripcionesList.add(topic);
+        return 1;
     }
     public Event getEvent() throws RemoteException {
         return null;
     }
     public Collection<String> topicListBySubscriber() throws RemoteException {
-        return null;
+        return SuscripcionesList;
     }
     public boolean unsubscribe(String topic) throws RemoteException {
         return true;
     }
     public void exit() throws RemoteException {
     }
+    public void NotificaCreacion(String Topic) throws RemoteException{
+        if (scbk != null){
+        scbk.topicAdded(Topic);}
+    }
+
+    public void NotificaDestruccion(String Topic) throws RemoteException{
+         if (scbk != null){
+        
+         scbk.topicRemoved(Topic);}
+    }
 }
+       
+
+    
+    
+
