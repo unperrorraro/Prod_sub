@@ -69,6 +69,12 @@ class PubSubImpl extends UnicastRemoteObject implements PubSub  {
         try {
             if (TemasMap.containsKey(ev.getTopic())){
             TemasMap.get(ev.getTopic()).encola(ev);
+            for (Subscriber Sub : subscriberListByTopic(ev.getTopic())) {
+
+               SubscriberImpl S = (SubscriberImpl)Sub;
+                S.EnviarEvento(ev);
+                
+            }
             return true;}
             else{return false;}
             

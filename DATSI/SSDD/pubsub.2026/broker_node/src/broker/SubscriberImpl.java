@@ -7,8 +7,13 @@ import java.rmi.registry.Registry;
 import java.rmi.server.UnicastRemoteObject;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.BlockingQueue;
+
 import pubsub.Subscriber;
 import pubsub.SubscriberCallback;
 import pubsub.Event;
@@ -19,7 +24,10 @@ class SubscriberImpl extends UnicastRemoteObject implements Subscriber  {
     PubSubImpl ps; // para acceder a funcionalidad del servicio general
     // para notificar al subscriptor de creación y destrucción de temas
     transient SubscriberCallback scbk; 
-    private List <String> SuscripcionesList;
+    private   List <String> SuscripcionesList;
+    private  BlockingQueue <Event> EventosCola;
+
+    
 
 
     public SubscriberImpl(PubSubImpl p, SubscriberCallback s) throws RemoteException {
@@ -28,6 +36,7 @@ class SubscriberImpl extends UnicastRemoteObject implements Subscriber  {
         subUUID = UUID.randomUUID();
 	    ps=p;
         SuscripcionesList = new ArrayList<>();
+        EventosCola = new ArrayBlockingQueue <>(100,true);
     }
     public UUID getUUID() throws RemoteException {
         return subUUID;
@@ -40,12 +49,22 @@ class SubscriberImpl extends UnicastRemoteObject implements Subscriber  {
         if (SuscripcionesList.contains(topic)){
         return 0;
     }
-   
         SuscripcionesList.add(topic);
+   
+        
         return 1;
     }
     public Event getEvent() throws RemoteException {
-        return null;
+
+        try{
+       return  EventosCola.poll(); }
+        catch(Exception e){
+
+                throw new RemoteException("error cola ,e");
+
+        }
+            
+       
     }
     public Collection<String> topicListBySubscriber() throws RemoteException {
         return SuscripcionesList;
@@ -64,6 +83,18 @@ class SubscriberImpl extends UnicastRemoteObject implements Subscriber  {
          if (scbk != null){
         
          scbk.topicRemoved(Topic);}
+    }
+    public void EnviarEvento(Event ev) throws RemoteException{
+        if (SuscripcionesList.contains(ev.getTopic())){
+            try{
+        EventosCola.put(ev); }
+        catch(Exception e){
+
+                throw new RemoteException("error cola ,e");
+
+        }
+            
+        }
     }
 }
        
